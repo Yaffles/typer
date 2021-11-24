@@ -4,6 +4,7 @@ from time import time, sleep
 import json
 from random import choice
 
+# UPDATE
 
 def init():
     """Initiates the color pairs needed"""
