@@ -4,6 +4,7 @@ from time import time, sleep
 import json
 from random import choice
 
+
 # UPDATE
 
 def init():
@@ -18,15 +19,48 @@ def init():
     curses.init_pair(8, curses.COLOR_MAGENTA, 0)  # Magenta
 
 
+def edit_text(stdscr, i):
+    with open('typing.json') as myfile:
+        options = json.load(myfile)
+    stdscr.addstr(0, 0, f'Edit text {i}\n', curses.color_pair(7))
+
+    stdscr.addstr('ENTER', curses.color_pair(1))
+    stdscr.addstr(' • ', curses.color_pair(2))
+    stdscr.addstr('Save changes\n\n', curses.color_pair(6))
+
+
+
 def edit_texts(stdscr):
     with open('typing.json') as myfile:
         options = json.load(myfile)
     stdscr.addstr(0, 0, 'Edit texts\n', curses.color_pair(7))
     text_amount = len(options["texts"])
 
+    stdscr.addstr('ENTER', curses.color_pair(1))
+    stdscr.addstr(' • ', curses.color_pair(2))
+    stdscr.addstr('Save changes\n\n', curses.color_pair(6))
+
     for n in range(text_amount):
-        stdscr.addstr(5, 25, f'{str(n)} • {options["texts"][n]}', curses.color_pair(1))
-        # stdscr.addstr(5, 25, str(options["text"]), curses.color_pair(1))
+        stdscr.addstr(f'\n{n}', curses.color_pair(1))
+        stdscr.addstr(' • ', curses.color_pair(2))
+        stdscr.addstr(f'{options["texts"][n]}')
+    stdscr.refresh()
+
+    done = False
+    while True:
+        key = stdscr.getch()
+        if key in {curses.KEY_ENTER, 10, 13}:
+            if done:
+                with open('typing.json', 'r+') as k:
+                    k.truncate(0)
+                    json.dump(options, k)
+            return()
+
+        for i in range(text_amount):
+            if key == ord(str(i)):
+
+                edit_text(stdscr, i)
+        # elif 48 <= key <= 57:
 
 
 def settings(stdscr):
