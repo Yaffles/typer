@@ -18,11 +18,23 @@ def init():
     curses.init_pair(8, curses.COLOR_MAGENTA, 0)  # Magenta
 
 
+def edit_texts(stdscr):
+    with open('typing.json') as myfile:
+        options = json.load(myfile)
+    stdscr.addstr(0, 0, 'Edit texts\n', curses.color_pair(7))
+    text_amount = len(options["texts"])
+
+    for n in range(text_amount):
+        stdscr.addstr(5, 25, f'{str(n)} • {options["texts"][n]}', curses.color_pair(1))
+        # stdscr.addstr(5, 25, str(options["text"]), curses.color_pair(1))
+
+
 def settings(stdscr):
     """Shows the current options and allows user to change, writes to typing.json"""
     with open('typing.json') as myfile:
         options = json.load(myfile)
 
+    text_amount = len(options["texts"])
     stdscr.addstr(0, 0, 'Settings\n', curses.color_pair(7))
 
     stdscr.addstr('ENTER', curses.color_pair(1))
@@ -57,7 +69,6 @@ def settings(stdscr):
 
     if options['text'] == 0:
         stdscr.addstr(5, 25, 'Random', curses.color_pair(2))
-
     else:
         stdscr.addstr(5, 25, f'{str(options["text"])}     ', curses.color_pair(1))
 
@@ -94,7 +105,7 @@ def settings(stdscr):
 
         if key == ord('3'):
             done = True
-            if options['text'] == 3:
+            if options['text'] >= text_amount:
                 options['text'] = 0
                 stdscr.addstr(5, 25, 'Random', curses.color_pair(2))
             else:
@@ -107,17 +118,26 @@ def start(stdscr):
     stdscr.clear()
     stdscr.addstr('Press enter to begin')
     stdscr.addstr('\nPress s to change settings')
+    stdscr.addstr('\nPress t to change texts')
     stdscr.refresh()
     while True:
         key = stdscr.getch()
         if key in {curses.KEY_ENTER, 10, 13}:
             break
-        if key == 115:
+        elif key == 115:  # s
             stdscr.clear()
             settings(stdscr)
             stdscr.clear()
             stdscr.addstr('Press enter to begin')
             stdscr.addstr('\nPress s to change settings')
+            stdscr.addstr('\nPress t to change texts')
+        elif key == 116:  # t
+            stdscr.clear()
+            edit_texts(stdscr)
+            stdscr.clear()
+            stdscr.addstr('Press enter to begin')
+            stdscr.addstr('\nPress s to change settings')
+            stdscr.addstr('\nPress t to change texts')
         stdscr.refresh()
     stdscr.clear()
 
@@ -150,11 +170,11 @@ def wpm(stdscr):
         letter_list.append(3)
     correct = 0
     overall_start = time()
-    while i < length:
+    while True:
         key = stdscr.getkey()
         height, width = stdscr.getmaxyx()
-        stdscr.addstr(6, 0, f'x - {str(width)}, y - {str(height)}')
-        stdscr.addstr(7, 0, '                          ')
+        # stdscr.addstr(6, 0, f'x - {str(width)}, y - {str(height)}')
+        # stdscr.addstr(7, 0, '                          ')
         if str(key) == 'KEY_RESIZE':
             stdscr.addstr(7, 0, 'Resizing may cause crashes', curses.A_BOLD | curses.color_pair(2))
             i -= 1
@@ -191,7 +211,7 @@ def wpm(stdscr):
         i += 1
         current_wrong = letter_list.count(1)
         if show_mistakes == 1:
-            for f in enumerate(letter_list):
+            for f in range(len(letter_list)):
                 if length <= width:
                     stdscr.addstr(5, 0, "                                ")
                     if letter_list[f] == 1:
@@ -202,6 +222,8 @@ def wpm(stdscr):
                         stdscr.addstr(2, f, ' ')
                 else:
                     stdscr.addstr(5, 0, "Increase window width and reload", curses.A_STANDOUT)
+        stdscr.addstr(4, 0,
+                      f"Length - {str(length)} i = {str(i)} current = {str(current_wrong)} mode = {str(mistake_mode)}")
         if i > 0:
             stdscr.move(0, i)
         else:
@@ -210,6 +232,8 @@ def wpm(stdscr):
         if mistake_mode:
             if length == i and current_wrong > 0 and mistake_mode == 1:
                 stdscr.addstr(7, 0, f'There is {current_wrong} mistakes that must be fixed', curses.color_pair(2))
+            elif length == i:
+                break
         elif length == i:
             break
         stdscr.refresh()
@@ -227,7 +251,7 @@ def wpm(stdscr):
     else:
         stdscr.addstr(7, 0, '                                                           ', curses.color_pair(2))
     stdscr.getkey()
-    sleep(1.5)
+    sleep(5)
     stdscr.refresh()
 
 
