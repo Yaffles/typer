@@ -19,15 +19,63 @@ def init():
     curses.init_pair(8, curses.COLOR_MAGENTA, 0)  # Magenta
 
 
+def add_text(stdscr):
+    with open('typing.json') as myfile:
+        options = json.load(myfile)
+
+    stdscr.addstr(0, 0, f'Add text\n\n', curses.color_pair(7))
+    stdscr.addstr('Start typing new text: \n', curses.color_pair(1))
+    stdscr.refresh()
+    curses.echo(True)
+    string = (stdscr.getstr()).decode("utf-8")
+    curses.echo(False)
+    options["texts"].append(string)
+    with open('typing.json', 'r+') as k:
+        k.truncate(0)
+        json.dump(options, k)
+    edit_texts(stdscr)
+
+
 def edit_text(stdscr, i):
     with open('typing.json') as myfile:
         options = json.load(myfile)
-    stdscr.addstr(0, 0, f'Edit text {i}\n', curses.color_pair(7))
 
+    stdscr.addstr(0, 0, f'Edit text {i}\n\n', curses.color_pair(7))
+    stdscr.addstr(options["texts"][i] + "\n\n")
     stdscr.addstr('ENTER', curses.color_pair(1))
     stdscr.addstr(' • ', curses.color_pair(2))
     stdscr.addstr('Save changes\n\n', curses.color_pair(6))
 
+    stdscr.addstr('1', curses.color_pair(1))
+    stdscr.addstr(' • ', curses.color_pair(2))
+    stdscr.addstr('Delete\n', curses.color_pair(6))
+
+    stdscr.addstr('2', curses.color_pair(1))
+    stdscr.addstr(' • ', curses.color_pair(2))
+    stdscr.addstr('Change\n\n', curses.color_pair(6))
+
+    done = False
+    while True:
+        key = stdscr.getch()
+        if key in {curses.KEY_ENTER, 10, 13}:
+            if done:
+                with open('typing.json', 'r+') as k:
+                    k.truncate(0)
+                    json.dump(options, k)
+            edit_texts(stdscr)
+            return
+        elif key == ord("1"):
+            stdscr.addstr("Deleted\n")
+            options["texts"].pop(i)
+            done = True
+        elif key == ord("2"):
+            stdscr.addstr(9, 0, "Start typing new text: \n", curses.color_pair(1))
+            curses.echo(True)
+            line = stdscr.getstr().decode("utf-8")
+            curses.echo(False)
+            options["texts"][i] = line
+            stdscr.addstr(11, 0, "\nDone", curses.color_pair(2))
+            done = True
 
 
 def edit_texts(stdscr):
@@ -39,6 +87,10 @@ def edit_texts(stdscr):
     stdscr.addstr('ENTER', curses.color_pair(1))
     stdscr.addstr(' • ', curses.color_pair(2))
     stdscr.addstr('Save changes\n\n', curses.color_pair(6))
+
+    stdscr.addstr('+', curses.color_pair(1))
+    stdscr.addstr(' • ', curses.color_pair(2))
+    stdscr.addstr('Add text\n\n', curses.color_pair(6))
 
     for n in range(text_amount):
         stdscr.addstr(f'\n{n}', curses.color_pair(1))
@@ -54,12 +106,19 @@ def edit_texts(stdscr):
                 with open('typing.json', 'r+') as k:
                     k.truncate(0)
                     json.dump(options, k)
-            return()
+            return ()
 
+        if key == ord("+"):
+            stdscr.clear()
+            add_text(stdscr)
+            stdscr.clear()
+            return ()
         for i in range(text_amount):
             if key == ord(str(i)):
-
+                stdscr.clear()
                 edit_text(stdscr, i)
+                stdscr.clear()
+                return ()
         # elif 48 <= key <= 57:
 
 
@@ -144,7 +203,7 @@ def settings(stdscr):
                 stdscr.addstr(5, 25, 'Random', curses.color_pair(2))
             else:
                 options['text'] += 1
-                stdscr.addstr(5, 25, f'{str(options["text"])}     ', curses.color_pair(1))
+                stdscr.addstr(5, 25, f'{str(options["text"]-1)}     ', curses.color_pair(1))
 
 
 def start(stdscr):
@@ -256,7 +315,7 @@ def wpm(stdscr):
                         stdscr.addstr(2, f, ' ')
                 else:
                     stdscr.addstr(5, 0, "Increase window width and reload", curses.A_STANDOUT)
-        stdscr.addstr(4, 0,
+        stdscr.addstr(6, 0,
                       f"Length - {str(length)} i = {str(i)} current = {str(current_wrong)} mode = {str(mistake_mode)}")
         if i > 0:
             stdscr.move(0, i)
