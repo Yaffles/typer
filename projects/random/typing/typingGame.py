@@ -3,12 +3,14 @@ from curses import wrapper
 from time import time, sleep
 import json
 from random import choice
+from os import system, path
 
 
 # UPDATE
 
 def init():
-    """Initiates the color pairs needed"""
+    """Initiates some things"""
+    system("title " + "Typer")
     curses.init_pair(1, 2, 0)  # Green
     curses.init_pair(2, 4, 0)  # Red
     curses.init_pair(3, 7, 0)  # White
@@ -18,17 +20,38 @@ def init():
     curses.init_pair(7, 6, 0)  # Yellow
     curses.init_pair(8, curses.COLOR_MAGENTA, 0)  # Magenta
 
+    # If json file is missing
+    if not path.isfile('typing.json'):
+        default_json = {"no_mistakes": False,
+                        "show_mistakes": 1,
+                        "text": 0,
+                        "texts":
+                            ["Hello, this is random text that you have to type quickly",
+                             "Mr. and Mrs. Dursley, of number four, Privet Drive, were proud to say that they were "
+                             "perfectly normal, thank you.",
+                             "When Mr. and Mrs. Dursley woke up on the dull, gray Tuesday our story starts"]
+                        }
+        with open('typing.json', 'w') as jsonFile:
+            json.dump(default_json, jsonFile)
+
 
 def add_text(stdscr):
     with open('typing.json') as myfile:
         options = json.load(myfile)
 
     stdscr.addstr(0, 0, f'Add text\n\n', curses.color_pair(7))
-    stdscr.addstr('Start typing new text: \n', curses.color_pair(1))
+    stdscr.addstr(1, 115, 'V', curses.color_pair(2))
+    stdscr.addstr(2, 0, 'Start typing new text: \n', curses.color_pair(1))
     stdscr.refresh()
     curses.echo(True)
     string = (stdscr.getstr()).decode("utf-8")
+    while len(string) >= 115:
+        stdscr.addstr(1, 0, 'TEXT WAS TOO LONG', curses.color_pair(2))
+        stdscr.addstr(9, 0, '    ' * 200, curses.color_pair(1))
+        stdscr.addstr(2, 0, 'Start typing new text: \n', curses.color_pair(1))
+        string = (stdscr.getstr()).decode("utf-8")
     curses.echo(False)
+
     options["texts"].append(string)
     with open('typing.json', 'r+') as k:
         k.truncate(0)
@@ -69,11 +92,17 @@ def edit_text(stdscr, i):
             options["texts"].pop(i)
             done = True
         elif key == ord("2"):
+            stdscr.addstr(8, 115, 'V', curses.color_pair(2))
             stdscr.addstr(9, 0, "Start typing new text: \n", curses.color_pair(1))
             curses.echo(True)
-            line = stdscr.getstr().decode("utf-8")
+            string = stdscr.getstr().decode("utf-8")
+            while len(string) >= 115:
+                stdscr.addstr(8, 0, 'TEXT WAS TOO LONG', curses.color_pair(2))
+                stdscr.addstr(9, 0, '    ' * 200, curses.color_pair(1))
+                stdscr.addstr(9, 0, 'Start typing new text: \n', curses.color_pair(1))
+                string = (stdscr.getstr()).decode("utf-8")
             curses.echo(False)
-            options["texts"][i] = line
+            options["texts"][i] = string
             stdscr.addstr(11, 0, "\nDone", curses.color_pair(2))
             done = True
 
@@ -203,7 +232,7 @@ def settings(stdscr):
                 stdscr.addstr(5, 25, 'Random', curses.color_pair(2))
             else:
                 options['text'] += 1
-                stdscr.addstr(5, 25, f'{str(options["text"]-1)}     ', curses.color_pair(1))
+                stdscr.addstr(5, 25, f'{str(options["text"] - 1)}     ', curses.color_pair(1))
 
 
 def start(stdscr):
